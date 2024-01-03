@@ -184,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @SuppressLint("RestrictedApi")
         @NonNull
         @Override
+        //CameraFilter cameraFilter = Camera2CameraFilter.createCameraFilter();
         public LinkedHashSet<Camera> filter(@NonNull LinkedHashSet<Camera> cameras) {
             Log.i(TAG, "cameras size: " + cameras.size());
             Iterator<Camera> cameraIterator = cameras.iterator();
