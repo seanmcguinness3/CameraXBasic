@@ -9,6 +9,8 @@ import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraMetadata;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -47,8 +49,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -184,7 +188,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @SuppressLint("RestrictedApi")
         @NonNull
         @Override
-        //CameraFilter cameraFilter = Camera2CameraFilter.createCameraFilter();
+
+                /*
+        //prepare a camera filter that selects external cameras
+        CameraFilter cameraFilter = Camera2CameraFilter.createCameraFilter(
+                (idCharMap) -> {
+                    LinkedHashMap<String, CameraCharacteristics> resultMap = new LinkedHashMap<>();
+                    for (Map.Entry<String, CameraCharacteristics> entry:idCharMap.entrySet()){
+                        if (entry.getValue().get(CameraCharacteristics.LENS_FACING).equals(CameraMetadata.LENS_FACING_EXTERNAL)){
+                            resultMap.put(entry.getKey(),entry.getValue());
+                        }
+                    }
+                    return resultMap;
+                }
+        );
+        */
+
         public LinkedHashSet<Camera> filter(@NonNull LinkedHashSet<Camera> cameras) {
             Log.i(TAG, "cameras size: " + cameras.size());
             Iterator<Camera> cameraIterator = cameras.iterator();
@@ -209,7 +228,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.createSurfaceProvider());
                 cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-                cameraSelector = new CameraSelector.Builder().addCameraFilter(new MyCameraFilter()).build();
+
+                //Sean's camera filter
+                CameraFilter cameraFilter = Camera2CameraFilter.createCameraFilter(
+                        (idCharMap) -> {
+                            LinkedHashMap<String, CameraCharacteristics> resultMap = new LinkedHashMap<>();
+                            for (Map.Entry<String, CameraCharacteristics> entry:idCharMap.entrySet()){
+                                if (entry.getValue().get(CameraCharacteristics.LENS_FACING).equals(CameraMetadata.LENS_FACING_EXTERNAL)){ //This is where i was hoping to set it to external, but that caused crash
+                                    resultMap.put(entry.getKey(),entry.getValue());
+                                }
+                            }
+                            return resultMap;
+                        }
+                );
+
+                //Sean's camera selector
+                cameraSelector = new CameraSelector.Builder().addCameraFilter(cameraFilter).build();
+                //cameraSelector = new CameraSelector.Builder().addCameraFilter(new MyCameraFilter()).build();
 
 
                 imageCapture = new ImageCapture.Builder().build();
